@@ -16,7 +16,7 @@
 
 A powerful, production-ready Python tool designed for **writers**, **researchers**, **journalists**, and the **OSINT community** who need to quickly and accurately extract text from large volumes of scanned or image-based PDF documents.
 
-By leveraging **concurrent processing** and **high-DPI rendering**, this tool transforms unsearchable PDFs into usable, indexed text for analysis and citation—complete with AI-powered name detection and comprehensive word analytics.
+By leveraging **concurrent processing**, **high-DPI rendering**, and **batch directory processing**, this tool transforms unsearchable PDFs into usable, indexed text for analysis and citation—complete with AI-powered name detection and comprehensive word analytics.
 
 ---
 
@@ -24,8 +24,10 @@ By leveraging **concurrent processing** and **high-DPI rendering**, this tool tr
 
 ### 🚀 **Performance & Reliability**
 - **⚡ Concurrent Processing** — Utilizes multiple CPU cores to process pages simultaneously, dramatically reducing extraction time
+- **📁 Batch Directory Processing** — Process entire folders of PDFs automatically with uninterrupted workflow
 - **🔄 Resume Capability** — Automatically detects partial output and allows resuming from the last successfully completed page
 - **🎯 High Accuracy** — Renders PDF pages to high-resolution PNGs (default 300 DPI) for superior OCR results
+- **🛡️ Robust Error Handling** — Continues processing even if individual files fail, with detailed error logging
 
 ### 📊 **Advanced Analytics**
 - **📈 Word Count Analysis** — Generates comprehensive CSV reports with:
@@ -42,6 +44,7 @@ By leveraging **concurrent processing** and **high-DPI rendering**, this tool tr
 - **💻 Command-Line Interface (CLI)** — Easy configuration via command-line arguments
 - **📦 Output Consolidation** — Merges all extracted text into a single `combined_output.txt` file
 - **🌍 Multi-Language Support** — Process documents in multiple languages simultaneously
+- **📝 Detailed Logging** — Automatic error logging for failed documents with timestamps
 
 ---
 
@@ -158,6 +161,7 @@ python -m spacy download en_core_web_sm
 
 ### **Basic Execution**
 
+#### **Single PDF File:**
 Run the script with the path to your PDF file:
 
 ```bash
@@ -167,6 +171,20 @@ python pdf_extractor.py path/to/your/document.pdf
 **The script will:**
 1. ✅ Check for previous progress
 2. ✅ Prompt you to process all pages, resume, or select a specific range
+
+#### **Directory of PDFs (Batch Mode):** 🆕
+Process all PDFs in a directory automatically:
+
+```bash
+python pdf_extractor.py path/to/pdf_folder/
+```
+
+**In batch mode, the script will:**
+1. ✅ Automatically detect all PDF files in the directory
+2. ✅ Process each PDF with ALL pages (no prompts)
+3. ✅ Continue processing even if individual files fail
+4. ✅ Log errors to `error_log.txt` in the source directory
+5. ✅ Provide a comprehensive summary at completion
 
 ---
 
@@ -184,6 +202,8 @@ Found existing files. Last successfully processed page was 50 of 100.
 Enter 'r' to resume at page 51, 'a' for all, 'n' for a new range, or 'q' to quit: r
 ```
 
+> **Note:** Resume capability is available for single PDF files only. In batch mode, each PDF starts fresh.
+
 ---
 
 ### **⚙️ Advanced Arguments**
@@ -192,8 +212,8 @@ Customize processing with these optional flags:
 
 | Argument | Default | Description |
 |----------|---------|-------------|
-| **`[PDF_PATH]`** | *Required* | Path to the input PDF file |
-| `--output-dir` | `.` | Base directory where the processing folder will be created |
+| **`[PDF_PATH]`** | *Required* | Path to input PDF file **OR** directory containing PDFs |
+| `--output-dir` | `.` | Base directory where processing folders will be created |
 | `--dpi` | `300` | Rendering quality (DPI). Higher = better OCR but slower |
 | `--lang` | `eng` | Tesseract language code(s). Use `+` to combine (e.g., `eng+deu`) |
 | `--tesseract-path` | `/usr/bin/tesseract` | Full path to Tesseract executable (crucial for Windows) |
@@ -202,7 +222,7 @@ Customize processing with these optional flags:
 
 ### **📝 Command Examples**
 
-#### **1. High-Quality Processing (600 DPI) with Multiple Languages:**
+#### **1. Single PDF - High-Quality Processing (600 DPI) with Multiple Languages:**
 
 ```bash
 python pdf_extractor.py thesis.pdf --dpi 600 --lang eng+fra
@@ -214,23 +234,48 @@ Enter 'a' for all pages, 'n' for a new range (e.g., 5-10), or 'q' to quit: n
 Enter page range (e.g., 5-10): 1-50
 ```
 
-#### **2. Windows with Custom Tesseract Path:**
+#### **2. Batch Processing - Entire Directory:**
+
+```bash
+python pdf_extractor.py ./research_papers/ --dpi 300 --lang eng
+```
+
+**Output:**
+```
+======================================================================
+BATCH PROCESSING MODE
+======================================================================
+Found 5 PDF file(s) in directory: ./research_papers/
+Processing mode: ALL PAGES (automatic for batch mode)
+======================================================================
+
+Processing PDF 1/5: paper_001.pdf
+[Processing details...]
+✓ SUCCESS: paper_001.pdf completed successfully
+
+Processing PDF 2/5: paper_002.pdf
+[Processing details...]
+✓ SUCCESS: paper_002.pdf completed successfully
+...
+```
+
+#### **3. Windows with Custom Tesseract Path:**
 
 ```bash
 python pdf_extractor.py my_doc.pdf --tesseract-path "C:\Program Files\Tesseract-OCR\tesseract.exe"
 ```
 
-#### **3. Process Specific Page Range:**
+#### **4. Batch Processing with Custom Output Directory:**
 
 ```bash
-python pdf_extractor.py report.pdf --output-dir ./results
+python pdf_extractor.py ./invoices/ --output-dir ./processed_invoices --dpi 300
 ```
-
-Then select range when prompted.
 
 ---
 
 ## 📂 Output Structure
+
+### **Single PDF Output:**
 
 A new directory named `<pdf_name>_processed` will be created:
 
@@ -247,6 +292,45 @@ A new directory named `<pdf_name>_processed` will be created:
     ├── 0001.txt                    # Text output for page 1
     ├── 0002.txt                    # Text output for page 2
     └── ...
+```
+
+### **Batch Processing Output:**
+
+When processing a directory, each PDF gets its own output folder:
+
+```
+output_directory/
+├── document1_processed/
+│   ├── combined_output.txt
+│   ├── word_count_report.csv
+│   ├── proper_names_report.csv
+│   ├── png_images/
+│   └── text_files/
+├── document2_processed/
+│   └── ...
+└── document3_processed/
+    └── ...
+```
+
+### **Error Logging (Batch Mode):** 🆕
+
+If any PDFs fail during batch processing, errors are logged in the source directory:
+
+```
+source_directory/
+├── document1.pdf
+├── document2.pdf
+├── corrupted.pdf
+└── error_log.txt              # ← Detailed error information
+```
+
+**Error log format:**
+```
+======================================================================
+[2024-12-21 14:30:45] ERROR processing: corrupted.pdf
+----------------------------------------------------------------------
+PyPdfError: EOF marker not found
+======================================================================
 ```
 
 > **💡 Note:** If a page fails OCR, its `.txt` file will contain an "OCR FAILED" marker with the error message. Failed pages are automatically skipped during consolidation.
@@ -303,6 +387,60 @@ Dr. Sarah Johnson,23,"5, 67, 89"
 ```
 
 > **⚠️ Note:** Proper name detection requires spaCy and the English language model. If not installed, this feature will be skipped with a warning message.
+
+---
+
+## 🔄 Batch Processing Workflow
+
+### **Example Scenario:**
+
+You have a folder of 50 scanned research papers that need OCR processing.
+
+```bash
+# Step 1: Organize PDFs
+mkdir research_papers
+cp *.pdf research_papers/
+
+# Step 2: Run batch processing
+python pdf_extractor.py research_papers/ --dpi 300 --output-dir ./extracted
+
+# Step 3: Review results
+ls extracted/
+# Shows: paper1_processed/, paper2_processed/, etc.
+
+# Step 4: Check for errors (if any)
+cat research_papers/error_log.txt
+```
+
+### **Batch Processing Features:**
+
+✅ **Automatic Processing** — No manual intervention required  
+✅ **Error Resilience** — Failed PDFs don't stop the batch  
+✅ **Detailed Logging** — Know exactly what succeeded and what failed  
+✅ **Progress Tracking** — See real-time progress for each PDF  
+✅ **Summary Report** — Comprehensive statistics at completion  
+
+---
+
+## 🐛 Troubleshooting
+
+### **Q: What happens if one PDF in a batch is corrupted?**
+**A:** The script logs the error to `error_log.txt` in the source directory and continues processing the remaining PDFs. You can review the error log after completion and re-process failed files individually if needed.
+
+### **Q: Can I resume a failed batch?**
+**A:** Simply re-run the same command. The script will skip PDFs that already have complete output directories, effectively resuming where it left off.
+
+### **Q: How do I process only specific pages in batch mode?**
+**A:** Batch mode always processes ALL pages automatically. For page-specific processing, process files individually instead.
+
+### **Q: Where do error logs go?**
+**A:** Error logs are saved as `error_log.txt` in the **source directory** (where the PDFs are located), not in the output directory.
+
+### **Q: Can I process subdirectories?**
+**A:** Not currently—only PDFs in the specified directory are processed (non-recursive). Subdirectories are not scanned.
+
+### **Q: What if processing is too slow?**
+**A:** Try reducing the `--dpi` value (e.g., `--dpi 200`). Lower DPI means faster processing but slightly reduced OCR accuracy.
 
 ---
 
